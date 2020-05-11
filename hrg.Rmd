@@ -1,0 +1,448 @@
+---
+title: 'Statistical Data Mining: Hierarchical Random Graph and Edge Prediction'
+author: "Thankam Abish"
+date: "April 28, 2020"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r echo = T, results = 'hide', message=FALSE, warning=FALSE}
+library(gRain)
+library(Rgraphviz)
+library(gRbase)
+library(ggm)
+library(gRim)
+library(bnlearn)
+library(igraph)
+library(igraphdata)
+```
+
+### Karate Data
+#### Removing 5% of Edges 
+##### (Green indicates removed edges)
+
+```{r}
+data(karate)
+head(karate)
+  
+kar_edges = gsize(karate) #CHANGE TO KARATE
+set.seed(1234)
+original = karate #CHANGE to KARATE
+randnum = sample(1:kar_edges, ceiling(kar_edges*.05))
+randnum <- randnum[order(-randnum)]
+g <- karate
+missingedge <- g
+missingedge <- delete.edges(g, which(E(g)$weight != 0))
+for(val in randnum){
+  missingedge <- missingedge + edge(as_ids(tail_of(g,E(g)[[val]])), as_ids(head_of(g,E(g)[[val]])))
+  g = g - E(g)[val]
+}
+newg = g
+missingedge <- as.undirected(missingedge)
+misse <- as.undirected(missingedge)
+medge = ceiling(kar_edges*.05)
+ghrg <- fit_hrg(g)
+plot_dendrogram(ghrg)
+pred <- predict_edges(g)
+#plot(pred$prob)
+E(g)$color <- "gray"
+lay <- layout_nicely(g)
+gprob <- add_edges(g, t(pred$edges[1:15, ]), color = "red")
+gprob2 <- add_edges(gprob, t(pred$edges[16:25,]), color = "orange")
+#plot(gprob2, layout = lay)
+
+#ALL PLOTS
+E(newg)$color = "red"
+E(missingedge)$color = "green"
+graph <- graph.union(newg, missingedge)
+E(graph)$color <- ifelse(is.na(E(graph)$color_1),E(graph)$color_2,E(graph)$color_1)
+graph <- as.undirected(graph)
+#plot(graph)
+vn <- sub("Actor ", "", V(graph)$name)
+V(graph)$label <- vn
+x11()
+plot(graph)
+```
+
+#### Predicted Edges and Hierarchical Random Graph 
+
+```{r}
+x11()
+plot(gprob2, layout=lay)
+x11()
+hrg <- fit_hrg(karate)
+ihrg <- as.igraph(hrg)
+ihrg$layout <- layout.reingold.tilford
+plot(ihrg, vertex.size=5, edge.arrow.size=0.2)
+```
+
+#### Correctly Predicted Edge Index in Red
+
+```{r}
+x11()
+#E(missingedge)
+x = c(15, 16) #INSERT INDEXES OF MISSING EDGES
+#"Actor 3","Actor 10", 
+#      "Actor 2", "Actor 20", 
+#      "Mr Hi", "Actor 11", 
+#      "Mr Hi", "Actor 6")
+plot(pred$prob[1:30], xlab = 'Edge Index', ylab = 'Link prediction probability', main = 'Top 30 Link Predictions')
+points(x, pred$prob[x], col = "red")
+```
+
+#### Removing 15% of Edges 
+##### (Green indicates removed edges)
+
+```{r}
+data(karate)
+head(karate)
+
+kar_edges = gsize(karate) #CHANGE TO KARATE
+set.seed(1234)
+original = karate #CHANGE to KARATE
+randnum = sample(1:kar_edges, ceiling(kar_edges*.15))
+randnum <- randnum[order(-randnum)]
+g <- karate
+missingedge <- g
+missingedge <- delete.edges(g, which(E(g)$weight != 0))
+for(val in randnum){
+  missingedge <- missingedge + edge(as_ids(tail_of(g,E(g)[[val]])), as_ids(head_of(g,E(g)[[val]])))
+  g = g - E(g)[val]
+}
+newg = g
+missingedge <- as.undirected(missingedge)
+misse <- as.undirected(missingedge)
+medge = ceiling(kar_edges*.15)
+ghrg <- fit_hrg(g)
+plot_dendrogram(ghrg)
+pred <- predict_edges(g)
+#plot(pred$prob)
+E(g)$color <- "gray"
+lay <- layout_nicely(g)
+gprob <- add_edges(g, t(pred$edges[1:15, ]), color = "red")
+gprob2 <- add_edges(gprob, t(pred$edges[16:25,]), color = "orange")
+#plot(gprob2, layout = lay)
+
+#ALL PLOTS
+E(newg)$color = "red"
+E(missingedge)$color = "green"
+graph <- graph.union(newg, missingedge)
+E(graph)$color <- ifelse(is.na(E(graph)$color_1),E(graph)$color_2,E(graph)$color_1)
+graph <- as.undirected(graph)
+#plot(graph)
+vn <- sub("Actor ", "", V(graph)$name)
+V(graph)$label <- vn
+
+x11()
+plot(graph)
+```
+
+#### Predicted Edges and Hierarchical Random Graph
+
+```{r}
+x11()
+plot(gprob2, layout=lay)
+x11()
+hrg <- fit_hrg(karate)
+ihrg <- as.igraph(hrg)
+ihrg$layout <- layout.reingold.tilford
+plot(ihrg, vertex.size=5, edge.arrow.size=0.2)
+```
+
+#### Correctly Predicted Edge Index in Red
+
+```{r}
+x11()
+#E(missingedge)
+#pred$edges[1:40,]
+x = c(1,9,15,17)#INSERT INDEXES OF MISSING EDGES
+plot(pred$prob[1:40], xlab = 'Edge Index', ylab = 'Link prediction probability', main = 'Top 40 Link Predictions')
+points(x, pred$prob[x], col = "red")
+```
+
+#### Removing 40% of Edges 
+##### (Green indicates removed edges)
+
+```{r}
+data(karate)
+head(karate)
+
+kar_edges = gsize(karate) #CHANGE TO KARATE
+set.seed(1234)
+original = karate #CHANGE to KARATE
+randnum = sample(1:kar_edges, ceiling(kar_edges*.40))
+randnum <- randnum[order(-randnum)]
+g <- karate
+missingedge <- g
+missingedge <- delete.edges(g, which(E(g)$weight != 0))
+for(val in randnum){
+  missingedge <- missingedge + edge(as_ids(tail_of(g,E(g)[[val]])), as_ids(head_of(g,E(g)[[val]])))
+  g = g - E(g)[val]
+}
+newg = g
+missingedge <- as.undirected(missingedge)
+misse <- as.undirected(missingedge)
+medge = ceiling(kar_edges*.40)
+ghrg <- fit_hrg(g)
+plot_dendrogram(ghrg)
+pred <- predict_edges(g)
+#plot(pred$prob)
+E(g)$color <- "gray"
+lay <- layout_nicely(g)
+gprob <- add_edges(g, t(pred$edges[1:30, ]), color = "red")
+gprob2 <- add_edges(gprob, t(pred$edges[31:55,]), color = "orange")
+#plot(gprob2, layout = lay)
+
+#ALL PLOTS
+E(newg)$color = "red"
+E(missingedge)$color = "green"
+graph <- graph.union(newg, missingedge)
+E(graph)$color <- ifelse(is.na(E(graph)$color_1),E(graph)$color_2,E(graph)$color_1)
+graph <- as.undirected(graph)
+#plot(graph)
+vn <- sub("Actor ", "", V(graph)$name)
+V(graph)$label <- vn
+
+x11()
+plot(graph)
+```
+
+#### Predicted Edges and Hierarchical Random Graph
+
+```{r}
+x11()
+plot(gprob2, layout=lay)
+x11()
+hrg <- fit_hrg(karate)
+ihrg <- as.igraph(hrg)
+ihrg$layout <- layout.reingold.tilford
+plot(ihrg, vertex.size=5, edge.arrow.size=0.2)
+```
+
+#### Correctly Predicted Edge Index in Red
+
+```{r}
+x11()
+#E(missingedge)
+#pred$edges[1:40,]
+x = c(29,8,12,33,48,42,41,55,35)#INSERT INDEXES OF MISSING EDGES
+plot(pred$prob[1:55], xlab = 'Edge Index', ylab = 'Link prediction probability', main = 'Top 55 Link Predictions')
+points(x, pred$prob[x], col = "red")
+```
+
+### Kite Data
+#### Removing 5% of Edges 
+##### (Green indicates removed edges)
+
+```{r}
+data(kite)
+head(kite)
+
+kar_edges = gsize(kite) #CHANGE
+set.seed(124345)
+original = kite #CHANGE
+randnum = sample(1:kar_edges, ceiling(kar_edges*.05))
+randnum <- randnum[order(-randnum)]
+g <- kite #CHANGE
+missingedge <- make_empty_graph() + vertices(LETTERS[1:10])
+for(val in randnum){
+  missingedge <- missingedge + edge(as_ids(tail_of(g,E(g)[[val]])), as_ids(head_of(g,E(g)[[val]])))
+  g = g - E(g)[val]
+}
+newg = g
+missingedge <- as.undirected(missingedge)
+misse <- as.undirected(missingedge)
+medge = ceiling(kar_edges*.05)
+ghrg <- fit_hrg(g)
+plot_dendrogram(ghrg)
+pred <- predict_edges(g)
+#plot(pred$prob)
+E(g)$color <- "gray"
+lay <- layout_nicely(g)
+gprob <- add_edges(g, t(pred$edges[1:5, ]), color = "red")
+gprob2 <- add_edges(gprob, t(pred$edges[6:10,]), color = "orange")
+#plot(gprob2, layout = lay)
+
+#ALL PLOTS
+E(newg)$color = "red"
+E(missingedge)$color = "green"
+graph <- graph.union(newg, missingedge)
+E(graph)$color <- ifelse(is.na(E(graph)$color_1),E(graph)$color_2,E(graph)$color_1)
+graph <- as.undirected(graph)
+#plot(graph)
+vn <- sub("Actor ", "", V(graph)$name)
+V(graph)$label <- vn
+
+x11()
+plot(graph)
+```
+
+#### Predicted Edges and Hierarchical Random Graph
+
+```{r}
+x11()
+plot(gprob2, layout=lay)
+x11()
+hrg <- fit_hrg(kite) #CHANGE
+ihrg <- as.igraph(hrg)
+ihrg$layout <- layout.reingold.tilford
+plot(ihrg, vertex.size=5, edge.arrow.size=0.2)
+
+```
+
+#### Correctly Predicted Edge Index in Red
+
+```{r}
+x11()
+#E(missingedge)
+#pred$edges[1:20,]
+x = c(5) #CHANGE
+#("A", "D")#INSERT INDEXES OF MISSING EDGES
+plot(pred$prob[1:10], xlab = 'Edge Index', ylab = 'Link prediction probability', main = 'Top 10 Link Predictions')
+points(x, pred$prob[x], col = "red")
+```
+
+
+#### Removing 15% of Edges 
+##### (Green indicates removed edges)
+
+```{r}
+data(kite)
+head(kite)
+
+kar_edges = gsize(kite) #CHANGE
+set.seed(124345)
+original = kite #CHANGE
+randnum = sample(1:kar_edges, ceiling(kar_edges*.15))
+randnum <- randnum[order(-randnum)]
+g <- kite #CHANGE
+missingedge <- make_empty_graph() + vertices(LETTERS[1:10])
+for(val in randnum){
+  missingedge <- missingedge + edge(as_ids(tail_of(g,E(g)[[val]])), as_ids(head_of(g,E(g)[[val]])))
+  g = g - E(g)[val]
+}
+newg = g
+missingedge <- as.undirected(missingedge)
+misse <- as.undirected(missingedge)
+medge = ceiling(kar_edges*.15)
+ghrg <- fit_hrg(g)
+plot_dendrogram(ghrg)
+pred <- predict_edges(g)
+#plot(pred$prob)
+E(g)$color <- "gray"
+lay <- layout_nicely(g)
+gprob <- add_edges(g, t(pred$edges[1:15, ]), color = "red")
+gprob2 <- add_edges(gprob, t(pred$edges[16:30,]), color = "orange")
+#plot(gprob2, layout = lay)
+
+#ALL PLOTS
+E(newg)$color = "red"
+E(missingedge)$color = "green"
+graph <- graph.union(newg, missingedge)
+E(graph)$color <- ifelse(is.na(E(graph)$color_1),E(graph)$color_2,E(graph)$color_1)
+graph <- as.undirected(graph)
+#plot(graph)
+vn <- sub("Actor ", "", V(graph)$name)
+V(graph)$label <- vn
+
+x11()
+plot(graph)
+```
+
+#### Predicted Edges and Hierarchical Random Graph
+
+```{r}
+x11()
+plot(gprob2, layout=lay)
+x11()
+hrg <- fit_hrg(kite) #CHANGE
+ihrg <- as.igraph(hrg)
+ihrg$layout <- layout.reingold.tilford
+plot(ihrg, vertex.size=5, edge.arrow.size=0.2)
+
+```
+
+#### Correctly Predicted Edge Index in Red
+
+```{r}
+x11()
+#E(missingedge)
+#pred$edges[1:30,]
+x = c(7,30) #CHANGE
+#("A", "D")#INSERT INDEXES OF MISSING EDGES
+plot(pred$prob[1:30], xlab = 'Edge Index', ylab = 'Link prediction probability', main = 'Top 30 Link Predictions')
+points(x, pred$prob[x], col = "red")
+```
+
+#### Removing 40% of Edges 
+##### (Green indicates removed edges)
+
+```{r}
+data(kite)
+head(kite)
+
+kar_edges = gsize(kite) #CHANGE
+set.seed(124345)
+original = kite #CHANGE
+randnum = sample(1:kar_edges, ceiling(kar_edges*.40))
+randnum <- randnum[order(-randnum)]
+g <- kite #CHANGE
+missingedge <- make_empty_graph() + vertices(LETTERS[1:10])
+for(val in randnum){
+  missingedge <- missingedge + edge(as_ids(tail_of(g,E(g)[[val]])), as_ids(head_of(g,E(g)[[val]])))
+  g = g - E(g)[val]
+}
+newg = g
+missingedge <- as.undirected(missingedge)
+misse <- as.undirected(missingedge)
+medge = ceiling(kar_edges*.40)
+ghrg <- fit_hrg(g)
+plot_dendrogram(ghrg)
+pred <- predict_edges(g)
+#plot(pred$prob)
+E(g)$color <- "gray"
+lay <- layout_nicely(g)
+gprob <- add_edges(g, t(pred$edges[1:15, ]), color = "red")
+gprob2 <- add_edges(gprob, t(pred$edges[16:30,]), color = "orange")
+#plot(gprob2, layout = lay)
+
+#ALL PLOTS
+E(newg)$color = "red"
+E(missingedge)$color = "green"
+graph <- graph.union(newg, missingedge)
+E(graph)$color <- ifelse(is.na(E(graph)$color_1),E(graph)$color_2,E(graph)$color_1)
+graph <- as.undirected(graph)
+#plot(graph)
+vn <- sub("Actor ", "", V(graph)$name)
+V(graph)$label <- vn
+
+x11()
+plot(graph)
+```
+
+#### Predicted Edges and Hierarchical Random Graph
+
+```{r}
+x11()
+plot(gprob2, layout=lay)
+x11()
+hrg <- fit_hrg(kite) #CHANGE
+ihrg <- as.igraph(hrg)
+ihrg$layout <- layout.reingold.tilford
+plot(ihrg, vertex.size=5, edge.arrow.size=0.2)
+
+```
+
+#### Correctly Predicted Edge Index in Red
+
+```{r}
+x11()
+#E(missingedge)
+#pred$edges[1:30,]
+x = c(1,12,4,6,7,23,21) #CHANGE
+#("A", "D")#INSERT INDEXES OF MISSING EDGES
+plot(pred$prob[1:30], xlab = 'Edge Index', ylab = 'Link prediction probability', main = 'Top 30 Link Predictions')
+points(x, pred$prob[x], col = "red")
+```
+
